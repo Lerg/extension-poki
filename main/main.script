@@ -1,0 +1,50 @@
+
+-- Tests a regular C++ extension function from extension.cpp
+local function test_cpp()
+    local a = 10
+    local b = 4.2
+    local result = html5nativeext.multiply(a, b)
+    local s = "" .. a .. " * " .. b .. " == " .. result
+    return s
+end
+
+-- Tests a regular C++ library function
+local function test_lib()
+    local n = 6
+    local result = html5nativeext.fibonacci(n)
+    local s = "Fibonacci( " .. n .. " ) == " .. result
+    return s
+end
+
+-- Tests a call to java script via the C++ macro EM_ASM_ 
+local function test_asm()
+    local a = 11
+    local b = 22
+    local result = html5nativeext.max(a, b)
+    local s = "Math.max(" .. a .. ", " .. b .. ") == " .. result
+    return s
+end
+
+-- Polls the user data, if it's been set from the html page
+-- If it has, it runs the code
+local function run_from_js()
+    local result = html5nativeext.get_user_data()
+    if result then
+        print("RUN CODE:" .. result)
+	    local fn = loadstring(result)
+	    fn();
+	else
+	end
+end
+
+function init(self)
+    label.set_text("#label_cpp", test_cpp())
+    label.set_text("#label_lib", test_lib())
+    label.set_text("#label_asm", test_asm())
+    label.set_text("#label_js", "Press the RUN Button!")
+end
+
+
+function update(self, dt)
+    run_from_js()
+end
