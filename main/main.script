@@ -1,50 +1,77 @@
-
--- Tests a regular C++ extension function from extension.cpp
-local function test_cpp()
-    local a = 10
-    local b = 4.2
-    local result = html5nativeext.multiply(a, b)
-    local s = "" .. a .. " * " .. b .. " == " .. result
-    return s
-end
-
--- Tests a regular C++ library function
-local function test_lib()
-    local n = 6
-    local result = html5nativeext.fibonacci(n)
-    local s = "Fibonacci( " .. n .. " ) == " .. result
-    return s
-end
-
--- Tests a call to java script via the C++ macro EM_ASM_ 
-local function test_asm()
-    local a = 11
-    local b = 22
-    local result = html5nativeext.max(a, b)
-    local s = "Math.max(" .. a .. ", " .. b .. ") == " .. result
-    return s
-end
-
--- Polls the user data, if it's been set from the html page
--- If it has, it runs the code
-local function run_from_js()
-    local result = html5nativeext.get_user_data()
-    if result then
-        print("RUN CODE:" .. result)
-	    local fn = loadstring(result)
-	    fn();
+local function set_pause(self, is_pause)
+	self.is_pause = is_pause
+	if self.is_pause then
+		poki.gameplay_stop()
 	else
+		poki.gameplay_start()()
 	end
 end
 
-function init(self)
-    label.set_text("#label_cpp", test_cpp())
-    label.set_text("#label_lib", test_lib())
-    label.set_text("#label_asm", test_asm())
-    label.set_text("#label_js", "Press the RUN Button!")
+local function on_commercial_break_button(self)
+	set_pause(self, true)
+	poki.commercial_break(function()
+		set_pause(self, false)
+	end)
 end
 
+local function on_rewarded_break_button(self)
+	set_pause(self, true)
+	poki.rewarded_break(function(success)
+		set_pause(self, false)
+		if success then
+			self.reward = self.reward + 1
+			label.set_text(self.reward_label, tostring(self.reward))
+		end
+	end)
+end
+
+function init(self)
+	msg.post('.', 'acquire_input_focus')
+	
+	self.score_label = msg.url('#score_label')
+	self.score = 0
+
+	self.reward_label = msg.url('#reward_label')
+	self.reward = 0
+	
+	self.scoring_period = 1
+	self.scoring_time = 0
+
+	self.is_pause = true
+
+	-- Init Poki SDK.
+	poki.init(function()
+		-- Indicate assets loading start.
+		poki.game_loading_start()
+
+		-- Load any additional assets.
+
+		-- Simulate loading delay with a timer.
+		timer.delay(1, false, function()
+			-- Indicate assets loading finish.
+			poki.game_loading_finished()
+			-- The mandatory commercial break once the game is loaded.
+			poki.commercial_break(function()
+				-- The break is over, let's start playing!
+				poki.gameplay_start()
+				set_pause(self, false)
+			end)
+		end)
+	end)
+end
 
 function update(self, dt)
-    run_from_js()
+	if not self.is_pause then
+		if self.scoring_time > self.scoring_period then
+			self.scoring_time = 0
+			self.score = self.score + 1
+			label.set_text(self.score_label, tostring(self.score))
+		else
+			self.scoring_time = self.scoring_time + dt
+		end
+	end
+end
+
+function on_input(self, action_id, action)
+	
 end

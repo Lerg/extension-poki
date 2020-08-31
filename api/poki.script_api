@@ -1,0 +1,60 @@
+- name: poki
+  type: table
+  desc: Poki SDK Extension
+
+  members:
+
+#*****************************************************************************************************
+
+  - name: init
+    type: function
+    desc: Init the extension.
+
+    parameters:
+      - name: callback
+        type: function
+        desc: Called when initialized.
+
+  - name: set_debug
+    type: function
+    desc: Enables or disables debugging.
+
+    parameters:
+      - name: is_debug
+        type: boolean
+        desc: Debugging state.
+
+  - name: game_loading_start
+    type: function
+    desc: Indicates that the game has started loading.
+
+  - name: game_loading_finished
+    type: function
+    desc: Indicates that the game has finished loading.
+
+  - name: gameplay_start
+    type: function
+    desc: Indicates that the gameplay has started.
+
+  - name: gameplay_stop
+    type: function
+    desc: Indicates that the gameplay has stopped.
+
+  - name: commercial_break
+    type: function
+    desc: Activates a commercial break.
+
+    parameters:
+      - name: callback
+        type: function
+        desc: Called when the break is over.
+
+  - name: rewarded_break
+    type: function
+    desc: Activates a rewarded break.
+
+    parameters:
+      - name: callback
+        type: function
+        desc: Called when the break is over with the success argument, boolean.
+

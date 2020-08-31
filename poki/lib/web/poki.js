@@ -1,46 +1,59 @@
 
 // https://kripken.github.io/emscripten-site/docs/porting/connecting_cpp_and_javascript/Interacting-with-code.html
 
-var Poki = {
+var ExtensionPokiJS = {
+	ExtensionPokiJS_init: function() {
+		PokiSDK.init().then(
+			() => {
+				console.log("Poki SDK successfully initialized");
+				// your code to continue to game
+				//continueToGame();
+			}   
+		).catch(
+			() => {
+				console.log("Initialized, but the user likely has adblock");
+				// your code to continue to game
+				//continueToGame();
+			}   
+		);
+	},
 
-        // This can be accessed from the bootstrap code in the .html file
-        $POKI: {
-            _data: '',
-            _cstr: null,
+	ExtensionPokiJS_set_debug: function() {
+		PokiSDK.setDebug(true);
+	},
 
-            GetTestData : function() {
-                if (typeof window !== 'undefined') {
-                    return POKI._data;
-                }
-                else {
-                    return '';
-                }
-            },
+	ExtensionPokiJS_game_loading_start: function() {
+		PokiSDK.gameLoadingStart();
+	},
 
-            SetTestData : function(data) {
-                if (typeof window !== 'undefined') {
-                    POKI._data = data;
-                }
-            },
-        },
+	ExtensionPokiJS_game_loading_finished: function() {
+		PokiSDK.gameLoadingFinished();
+	},
 
-        // These can be called from within the extension, in C++
-        testGetUserData: function() {
-            if (null == POKI._cstr) {
-                var str = POKI.GetTestData();                 // get the data from java script
-                if (str != '') {
-                    POKI._cstr = _malloc(str.length + 1);         // allocate C++ memory to store it in
-                    Module.writeStringToMemory(str, POKI._cstr, false);  // copy the data into the C array
-                }
-            }
-            return POKI._cstr;
-        },
+	ExtensionPokiJS_gameplay_start: function() {
+		PokiSDK.gameplayStart();
+	},
 
-        testClearUserData: function() {
-            POKI._data = ''
-            POKI._cstr = null
-        }
+	ExtensionPokiJS_gameplay_stop: function() {
+		PokiSDK.gameplayStop();
+	},
+
+	ExtensionPokiJS_commercial_break: function() {
+		PokiSDK.commercialBreak().then(
+			() => {
+				console.log("Commercial break finished, proceeding to game");
+			}
+		);
+	},
+
+	ExtensionPokiJS_rewarded_break: function() {
+		PokiSDK.rewardedBreak().then(
+			(success) => {
+				console.log("Rewarded break finished, success = " + success);
+			}
+		);
+	}
 }
 
-autoAddDeps(Poki, '$POKI');
-mergeInto(LibraryManager.library, Poki);
+autoAddDeps(ExtensionPokiJS, '$ExtensionPokiJS');
+mergeInto(LibraryManager.library, ExtensionPokiJS);
