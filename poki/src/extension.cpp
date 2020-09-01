@@ -1,75 +1,166 @@
 #if defined(DM_PLATFORM_HTML5)
 
-#include <extension.h>
 #include <emscripten.h>
 
+#include "extension.h"
+#include "utils.h"
+
+typedef void (*Callback_v)();
+typedef void (*Callback_vi)(const int arg1);
+
 // The Emscripten JS methods from lib/web/poki.js
-extern "C" void ExtensionPokiJS_init();
-extern "C" void ExtensionPokiJS_set_debug();
-extern "C" void ExtensionPokiJS_game_loading_start();
-extern "C" void ExtensionPokiJS_game_loading_finished();
-extern "C" void ExtensionPokiJS_gameplay_start();
-extern "C" void ExtensionPokiJS_gameplay_stop();
-extern "C" void ExtensionPokiJS_commercial_break();
-extern "C" void ExtensionPokiJS_rewarded_break();
+extern "C" {
+	void ExtensionPokiJS_init(Callback_vi callback);
+	void ExtensionPokiJS_set_debug(bool is_debug);
+	void ExtensionPokiJS_game_loading_start();
+	void ExtensionPokiJS_game_loading_finished();
+	void ExtensionPokiJS_gameplay_start();
+	void ExtensionPokiJS_gameplay_stop();
+	void ExtensionPokiJS_commercial_break(Callback_v callback);
+	void ExtensionPokiJS_rewarded_break(Callback_vi callback);
+	void ExtensionPokiJS_happy_time(double intensity);
+}
 
-static int EXTENSION_INIT(lua_State *L) {
-	utils::check_arg_count(L, 0);
-	ExtensionPokiJS_init();
+static dmScript::LuaCallbackInfo *init_callback = NULL;
+static dmScript::LuaCallbackInfo *commercial_break_callback = NULL;
+static dmScript::LuaCallbackInfo *rewarded_break_callback = NULL;
+
+static void extension_init_callback(const int is_ads_blocked) {
+	lua_State *L = dmScript::GetCallbackLuaContext(init_callback);
+	DM_LUA_STACK_CHECK(L, 0);
+
+	lua_getglobal(L, "poki");
+
+	lua_pushboolean(L, true);
+	lua_setfield(L, -2, "is_initialized");
+
+	if (is_ads_blocked == 1) {
+		lua_pushboolean(L, true);
+		lua_setfield(L, -2, "is_ads_blocked");
+	}
+
+	lua_pop(L, 1); // poki
+
+	if (!dmScript::SetupCallback(init_callback)) {
+		return;
+	}
+	lua_pop(L, 1);
+
+	lua_call(L, 0, 0);
+
+	dmScript::TeardownCallback(init_callback);
+	dmScript::DestroyCallback(init_callback);
+}
+
+static void extension_commercial_break_callback() {
+	lua_State *L = dmScript::GetCallbackLuaContext(commercial_break_callback);
+	DM_LUA_STACK_CHECK(L, 0);
+
+	if (!dmScript::SetupCallback(commercial_break_callback)) {
+		return;
+	}
+	lua_pop(L, 1);
+
+	lua_call(L, 0, 0);
+
+	dmScript::TeardownCallback(commercial_break_callback);
+	dmScript::DestroyCallback(commercial_break_callback);
+}
+
+static void extension_rewarded_break_callback(const int success) {
+	lua_State *L = dmScript::GetCallbackLuaContext(rewarded_break_callback);
+	DM_LUA_STACK_CHECK(L, 0);
+
+	if (!dmScript::SetupCallback(rewarded_break_callback)) {
+		return;
+	}
+	lua_pop(L, 1);
+
+	lua_pushboolean(L, success == 1 ? true : false);
+
+	lua_call(L, 1, 0);
+
+	dmScript::TeardownCallback(rewarded_break_callback);
+	dmScript::DestroyCallback(rewarded_break_callback);
+}
+
+static int extension_init(lua_State *L) {
+	utils::check_arg_count(L, 1);
+	if (lua_isfunction(L, 1)) {
+		init_callback = dmScript::CreateCallback(L, 1);
+		ExtensionPokiJS_init((Callback_vi)extension_init_callback);
+	}
 	return 0;
 }
 
-static int EXTENSION_SET_DEBUG(lua_State *L) {
-	utils::check_arg_count(L, 0);
-	ExtensionPokiJS_set_debug();
+static int extension_set_debug(lua_State *L) {
+	utils::check_arg_count(L, 1);
+	if (lua_isboolean(L, 1)) {
+		ExtensionPokiJS_set_debug(lua_toboolean(L, 1));
+	}
 	return 0;
 }
 
-static int EXTENSION_GAME_LOADING_START(lua_State *L) {
+static int extension_game_loading_start(lua_State *L) {
 	utils::check_arg_count(L, 0);
 	ExtensionPokiJS_game_loading_start();
 	return 0;
 }
 
-static int EXTENSION_GAME_LOADING_FINISHED(lua_State *L) {
+static int extension_game_loading_finished(lua_State *L) {
 	utils::check_arg_count(L, 0);
 	ExtensionPokiJS_game_loading_finished();
 	return 0;
 }
 
-static int EXTENSION_GAMEPLAY_START(lua_State *L) {
+static int extension_gameplay_start(lua_State *L) {
 	utils::check_arg_count(L, 0);
 	ExtensionPokiJS_gameplay_start();
 	return 0;
 }
 
-static int EXTENSION_GAMEPLAY_STOP(lua_State *L) {
+static int extension_gameplay_stop(lua_State *L) {
 	utils::check_arg_count(L, 0);
 	ExtensionPokiJS_gameplay_stop();
 	return 0;
 }
 
-static int EXTENSION_COMMERCIAL_BREAK(lua_State *L) {
-	utils::check_arg_count(L, 0);
-	ExtensionPokiJS_commercial_break();
+static int extension_commercial_break(lua_State *L) {
+	utils::check_arg_count(L, 1);
+	if (lua_isfunction(L, 1)) {
+		commercial_break_callback = dmScript::CreateCallback(L, 1);
+		ExtensionPokiJS_commercial_break((Callback_v)extension_commercial_break_callback);
+	}
 	return 0;
 }
 
-static int EXTENSION_REWARDED_BREAK(lua_State *L) {
-	utils::check_arg_count(L, 0);
-	ExtensionPokiJS_rewarded_break();
+static int extension_rewarded_break(lua_State *L) {
+	utils::check_arg_count(L, 1);
+	if (lua_isfunction(L, 1)) {
+		rewarded_break_callback = dmScript::CreateCallback(L, 1);
+		ExtensionPokiJS_rewarded_break((Callback_vi)extension_rewarded_break_callback);
+	}
+	return 0;
+}
+
+static int extension_happy_time(lua_State *L) {
+	utils::check_arg_count(L, 1);
+	if (lua_isnumber(L, 1)) {
+		ExtensionPokiJS_happy_time(lua_tonumber(L, 1));
+	}
 	return 0;
 }
 
 static const luaL_reg lua_functions[] = {
-	{"init", EXTENSION_INIT},
-	{"set_debug", EXTENSION_SET_DEBUG},
-	{"game_loading_start", EXTENSION_GAME_LOADING_START},
-	{"game_loading_finished", EXTENSION_GAME_LOADING_FINISHED},
-	{"gameplay_start", EXTENSION_GAMEPLAY_START},
-	{"gameplay_stop", EXTENSION_GAMEPLAY_STOP},
-	{"commercial_break", EXTENSION_COMMERCIAL_BREAK},
-	{"rewarded_break", EXTENSION_REWARDED_BREAK},
+	{"init", extension_init},
+	{"set_debug", extension_set_debug},
+	{"game_loading_start", extension_game_loading_start},
+	{"game_loading_finished", extension_game_loading_finished},
+	{"gameplay_start", extension_gameplay_start},
+	{"gameplay_stop", extension_gameplay_stop},
+	{"commercial_break", extension_commercial_break},
+	{"rewarded_break", extension_rewarded_break},
+	{"happy_time", extension_happy_time},
 	{0, 0}
 };
 
@@ -84,6 +175,13 @@ dmExtension::Result APP_FINALIZE(dmExtension::AppParams *params) {
 dmExtension::Result INITIALIZE(dmExtension::Params *params) {
 	lua_State *L = params->m_L;
 	luaL_register(L, EXTENSION_NAME_STRING, lua_functions);
+
+	lua_pushboolean(L, false);
+	lua_setfield(L, -2, "is_initialized");
+
+	lua_pushboolean(L, false);
+	lua_setfield(L, -2, "is_ads_blocked");
+
 	lua_pop(params->m_L, 1);
 
 	return dmExtension::RESULT_OK;

@@ -58,3 +58,19 @@
         type: function
         desc: Called when the break is over with the success argument, boolean.
 
+  - name: happy_time
+    type: function
+    desc: Indicate a happy moment for the player.
+
+    parameters:
+      - name: intensity
+        type: number
+        desc: Happiness level, from 0.0 to 1.0.
+
+  - name: is_initialized
+    type: boolean
+    desc: True if the extension has been initialized.
+
+  - name: is_ads_blocked
+    type: boolean
+    desc: True if during the initialization Poki detects that the user likely has an ad blocker.

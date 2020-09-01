@@ -1,25 +1,19 @@
 
-// https://kripken.github.io/emscripten-site/docs/porting/connecting_cpp_and_javascript/Interacting-with-code.html
-
-var ExtensionPokiJS = {
-	ExtensionPokiJS_init: function() {
+var extension = {
+	ExtensionPokiJS_init: function(callback) {
 		PokiSDK.init().then(
 			() => {
-				console.log("Poki SDK successfully initialized");
-				// your code to continue to game
-				//continueToGame();
+				Module.dynCall_vi(callback, [0]);
 			}   
 		).catch(
 			() => {
-				console.log("Initialized, but the user likely has adblock");
-				// your code to continue to game
-				//continueToGame();
+				Module.dynCall_vi(callback, [1]);
 			}   
 		);
 	},
 
-	ExtensionPokiJS_set_debug: function() {
-		PokiSDK.setDebug(true);
+	ExtensionPokiJS_set_debug: function(is_debug) {
+		PokiSDK.setDebug(is_debug);
 	},
 
 	ExtensionPokiJS_game_loading_start: function() {
@@ -38,22 +32,25 @@ var ExtensionPokiJS = {
 		PokiSDK.gameplayStop();
 	},
 
-	ExtensionPokiJS_commercial_break: function() {
+	ExtensionPokiJS_commercial_break: function(callback) {
 		PokiSDK.commercialBreak().then(
 			() => {
-				console.log("Commercial break finished, proceeding to game");
+				Module.dynCall_v(callback);
 			}
 		);
 	},
 
-	ExtensionPokiJS_rewarded_break: function() {
+	ExtensionPokiJS_rewarded_break: function(callback) {
 		PokiSDK.rewardedBreak().then(
 			(success) => {
-				console.log("Rewarded break finished, success = " + success);
+				Module.dynCall_vi(callback, [success ? 1 : 0]);
 			}
 		);
+	},
+
+	ExtensionPokiJS_happy_time: function(intensity) {
+		PokiSDK.happyTime(intensity);
 	}
 }
 
-autoAddDeps(ExtensionPokiJS, '$ExtensionPokiJS');
-mergeInto(LibraryManager.library, ExtensionPokiJS);
+mergeInto(LibraryManager.library, extension);
