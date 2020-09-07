@@ -86,7 +86,7 @@ static void extension_rewarded_break_callback(const int success) {
 
 static int extension_init(lua_State *L) {
 	utils::check_arg_count(L, 1);
-	if (lua_isfunction(L, 1)) {
+	if (utils::check_arg_type(L, "init", "callback", 1, LUA_TFUNCTION)) {
 		init_callback = dmScript::CreateCallback(L, 1);
 		ExtensionPokiJS_init((Callback_vi)extension_init_callback);
 	}
@@ -95,7 +95,7 @@ static int extension_init(lua_State *L) {
 
 static int extension_set_debug(lua_State *L) {
 	utils::check_arg_count(L, 1);
-	if (lua_isboolean(L, 1)) {
+	if (utils::check_arg_type(L, "set_debug", "is_debug", 1, LUA_TBOOLEAN)) {
 		ExtensionPokiJS_set_debug(lua_toboolean(L, 1));
 	}
 	return 0;
@@ -127,7 +127,7 @@ static int extension_gameplay_stop(lua_State *L) {
 
 static int extension_commercial_break(lua_State *L) {
 	utils::check_arg_count(L, 1);
-	if (lua_isfunction(L, 1)) {
+	if (utils::check_arg_type(L, "commercial_break", "callback", 1, LUA_TFUNCTION)) {
 		commercial_break_callback = dmScript::CreateCallback(L, 1);
 		ExtensionPokiJS_commercial_break((Callback_v)extension_commercial_break_callback);
 	}
@@ -136,7 +136,7 @@ static int extension_commercial_break(lua_State *L) {
 
 static int extension_rewarded_break(lua_State *L) {
 	utils::check_arg_count(L, 1);
-	if (lua_isfunction(L, 1)) {
+	if (utils::check_arg_type(L, "rewarded_break", "callback", 1, LUA_TFUNCTION)) {
 		rewarded_break_callback = dmScript::CreateCallback(L, 1);
 		ExtensionPokiJS_rewarded_break((Callback_vi)extension_rewarded_break_callback);
 	}
@@ -145,7 +145,7 @@ static int extension_rewarded_break(lua_State *L) {
 
 static int extension_happy_time(lua_State *L) {
 	utils::check_arg_count(L, 1);
-	if (lua_isnumber(L, 1)) {
+	if (utils::check_arg_type(L, "happy_time", "intensity", 1, LUA_TNUMBER)) {
 		ExtensionPokiJS_happy_time(lua_tonumber(L, 1));
 	}
 	return 0;

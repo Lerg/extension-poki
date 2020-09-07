@@ -1,6 +1,7 @@
 #if !defined(DM_PLATFORM_HTML5)
 
 #include "extension.h"
+#include "utils.h"
 
 static void timer_delay(lua_State *L, double delay, int callback) {
 	lua_getglobal(L, "timer");
@@ -35,7 +36,8 @@ static int set_is_initialized(lua_State *L) {
 
 static int extension_init(lua_State *L) {
 	dmLogInfo("init");
-	if (lua_isfunction(L, 1) && lua_gettop(L) == 1) {
+	utils::check_arg_count(L, 1);
+	if (utils::check_arg_type(L, "init", "callback", 1, LUA_TFUNCTION)) {
 		double delay = 1.0;
 		int callback = luaL_ref(L, LUA_REGISTRYINDEX);
 		timer_delay(L, delay, callback);
@@ -49,32 +51,40 @@ static int extension_init(lua_State *L) {
 
 static int extension_set_debug(lua_State *L) {
 	dmLogInfo("set_debug");
+	utils::check_arg_count(L, 1);
+	if (utils::check_arg_type(L, "set_debug", "is_debug", 1, LUA_TBOOLEAN)) {
+	}
 	return 0;
 }
 
 static int extension_game_loading_start(lua_State *L) {
 	dmLogInfo("game_loading_start");
+	utils::check_arg_count(L, 0);
 	return 0;
 }
 
 static int extension_game_loading_finished(lua_State *L) {
 	dmLogInfo("game_loading_finished");
+	utils::check_arg_count(L, 0);
 	return 0;
 }
 
 static int extension_gameplay_start(lua_State *L) {
 	dmLogInfo("gameplay_start");
+	utils::check_arg_count(L, 0);
 	return 0;
 }
 
 static int extension_gameplay_stop(lua_State *L) {
 	dmLogInfo("gameplay_stop");
+	utils::check_arg_count(L, 0);
 	return 0;
 }
 
 static int extension_commercial_break(lua_State *L) {
 	dmLogInfo("commercial_break");
-	if (lua_isfunction(L, 1) && lua_gettop(L) == 1) {
+	utils::check_arg_count(L, 1);
+	if (utils::check_arg_type(L, "commercial_break", "callback", 1, LUA_TFUNCTION)) {
 		int callback = luaL_ref(L, LUA_REGISTRYINDEX);
 		timer_delay(L, 1, callback);
 	}
@@ -83,7 +93,8 @@ static int extension_commercial_break(lua_State *L) {
 
 static int extension_rewarded_break(lua_State *L) {
 	dmLogInfo("rewarded_break");
-	if (lua_isfunction(L, 1) && lua_gettop(L) == 1) {
+	utils::check_arg_count(L, 1);
+	if (utils::check_arg_type(L, "rewarded_break", "callback", 1, LUA_TFUNCTION)) {
 		dmScript::GetInstance(L); // Script instance.
 		lua_pushvalue(L, 1); // Callback.
 		lua_pushboolean(L, true); // Success = true
@@ -96,6 +107,9 @@ static int extension_rewarded_break(lua_State *L) {
 
 static int extension_happy_time(lua_State *L) {
 	dmLogInfo("happy_time");
+	utils::check_arg_count(L, 1);
+	if (utils::check_arg_type(L, "happy_time", "intensity", 1, LUA_TNUMBER)) {
+	}
 	return 0;
 }
 

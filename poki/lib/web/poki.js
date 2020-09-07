@@ -4,11 +4,11 @@ var extension = {
 		PokiSDK.init().then(
 			() => {
 				Module.dynCall_vi(callback, [0]);
-			}   
+			}
 		).catch(
 			() => {
 				Module.dynCall_vi(callback, [1]);
-			}   
+			}
 		);
 	},
 
